@@ -28,6 +28,10 @@ public class Usuario {
     @OneToMany(mappedBy = "usuario")
     private List<Comentario> comentarios = new ArrayList<>();
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Rol rol = Rol.ESTUDIANTE;
+
     public Usuario() {
     }
 
@@ -80,4 +84,8 @@ public class Usuario {
     public void setComentarios(List<Comentario> comentarios) {
         this.comentarios = comentarios;
     }
+
+    public Rol getRol() {return rol;}
+
+    public void setRol(Rol rol) {this.rol = rol;}
 }
