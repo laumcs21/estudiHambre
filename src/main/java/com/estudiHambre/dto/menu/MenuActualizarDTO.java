@@ -1,16 +1,24 @@
 package com.estudiHambre.dto.menu;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MenuActualizarDTO {
 
+    @Pattern(regexp = ".*\\S.*", message = "El título no puede estar vacío")
+    @Size(max = 100, message = "El título no puede superar los 100 caracteres")
     private String titulo;
+
+    @Size(max = 500, message = "La descripción no puede superar los 500 caracteres")
     private String descripcion;
+
+    @DecimalMin(value = "0.01", message = "El precio debe ser mayor que cero")
     private BigDecimal precio;
-    private boolean disponible;
-    private List<String> imagenes = new ArrayList<>();
+
+    private Boolean disponible;
 
     public MenuActualizarDTO() {
     }
@@ -39,19 +47,11 @@ public class MenuActualizarDTO {
         this.precio = precio;
     }
 
-    public boolean isDisponible() {
+    public Boolean getDisponible() {
         return disponible;
     }
 
-    public void setDisponible(boolean disponible) {
+    public void setDisponible(Boolean disponible) {
         this.disponible = disponible;
-    }
-
-    public List<String> getImagenes() {
-        return imagenes;
-    }
-
-    public void setImagenes(List<String> imagenes) {
-        this.imagenes = imagenes;
     }
 }

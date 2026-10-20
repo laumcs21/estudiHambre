@@ -1,5 +1,7 @@
 package com.estudiHambre.dto.establecimiento;
 
+import com.estudiHambre.model.EstadoEstablecimiento;
+
 public class EstablecimientoRespuestaDTO {
 
     private Long id;
@@ -11,6 +13,7 @@ public class EstablecimientoRespuestaDTO {
     private String imagenUrl;
     private Double latitud;
     private Double longitud;
+    private EstadoEstablecimiento estado;
 
     public EstablecimientoRespuestaDTO() {
     }
@@ -85,5 +88,13 @@ public class EstablecimientoRespuestaDTO {
 
     public void setLongitud(Double longitud) {
         this.longitud = longitud;
+    }
+
+    public EstadoEstablecimiento getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoEstablecimiento estado) {
+        this.estado = estado;
     }
 }

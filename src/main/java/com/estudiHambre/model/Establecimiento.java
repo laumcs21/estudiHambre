@@ -26,9 +26,16 @@ public class Establecimiento {
 
     private String imagenUrl;
 
+    @Column(name = "imagen_public_id")
+    private String imagenPublicId;
+
     private Double latitud;
 
     private Double longitud;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "propietario_id")
+    private Usuario propietario;
 
     @OneToMany(
             mappedBy = "establecimiento",
@@ -42,6 +49,10 @@ public class Establecimiento {
 
     @OneToMany(mappedBy = "establecimiento")
     private List<Comentario> comentarios = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoEstablecimiento estado = EstadoEstablecimiento.PENDIENTE;
 
     public Establecimiento() {
     }
@@ -156,5 +167,29 @@ public class Establecimiento {
 
     public void setComentarios(List<Comentario> comentarios) {
         this.comentarios = comentarios;
+    }
+
+    public Usuario getPropietario() {
+        return propietario;
+    }
+
+    public void setPropietario(Usuario propietario) {
+        this.propietario = propietario;
+    }
+
+    public EstadoEstablecimiento getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoEstablecimiento estado) {
+        this.estado = estado;
+    }
+
+    public String getImagenPublicId() {
+        return imagenPublicId;
+    }
+
+    public void setImagenPublicId(String imagenPublicId) {
+        this.imagenPublicId = imagenPublicId;
     }
 }

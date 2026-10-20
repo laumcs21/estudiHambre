@@ -1,12 +1,27 @@
 package com.estudiHambre.controller;
 
+import com.estudiHambre.dto.usuario.UsuarioRegistroDTO;
 import com.estudiHambre.dto.usuario.auth.LoginDTO;
 import com.estudiHambre.dto.usuario.auth.LoginRespuestaDTO;
-import com.estudiHambre.dto.usuario.UsuarioRegistroDTO;
 import com.estudiHambre.service.AuthService;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,14 +29,25 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthenticationManager authenticationManager;
 
-    public AuthController(AuthService authService) {
+    private final SecurityContextRepository securityContextRepository =
+            new HttpSessionSecurityContextRepository();
+
+    private final SessionAuthenticationStrategy sessionStrategy =
+            new ChangeSessionIdAuthenticationStrategy();
+
+    public AuthController(
+            AuthService authService,
+            AuthenticationManager authenticationManager) {
+
         this.authService = authService;
+        this.authenticationManager = authenticationManager;
     }
 
     @PostMapping("/registro")
     public ResponseEntity<?> registrar(
-            @RequestBody UsuarioRegistroDTO dto) {
+            @Valid @RequestBody UsuarioRegistroDTO dto) {
 
         try {
             LoginRespuestaDTO respuesta = authService.registrar(dto);
@@ -31,25 +57,63 @@ public class AuthController {
                     .body(respuesta);
 
         } catch (IllegalArgumentException e) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> iniciarSesion(
-            @RequestBody LoginDTO dto) {
+            @RequestBody LoginDTO dto,
+            HttpServletRequest request,
+            HttpServletResponse response) {
 
-        try {
-            LoginRespuestaDTO respuesta = authService.iniciarSesion(dto);
+            Authentication authentication =
+                    authenticationManager.authenticate(
+                            new UsernamePasswordAuthenticationToken(
+                                    dto.getCorreo(),
+                                    dto.getContrasena()
+                            )
+                    );
 
-            return ResponseEntity.ok(respuesta);
+            sessionStrategy.onAuthentication(
+                    authentication, request, response
+            );
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body("Correo o contraseña incorrectos");
-        }
+            SecurityContext context =
+                    SecurityContextHolder.createEmptyContext();
+
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+
+            securityContextRepository.saveContext(
+                    context, request, response
+            );
+
+            LoginRespuestaDTO resultado =
+                    authService.iniciarSesion(dto);
+
+            return ResponseEntity.ok(resultado);
+    }
+
+    @GetMapping("/csrf")
+    public ResponseEntity<?> obtenerCsrf(CsrfToken token) {
+        return ResponseEntity.ok(
+                java.util.Map.of(
+                        "headerName", token.getHeaderName(),
+                        "token", token.getToken()
+                )
+        );
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> usuarioActual(
+            Authentication authentication) {
+
+        return ResponseEntity.ok(
+                java.util.Map.of(
+                        "correo", authentication.getName(),
+                        "autenticado", true
+                )
+        );
     }
 }

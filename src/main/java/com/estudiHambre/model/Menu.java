@@ -31,8 +31,7 @@ public class Menu {
             joinColumns = @JoinColumn(name = "menu_id")
     )
     @OrderColumn(name = "orden")
-    @Column(name = "imagen_url")
-    private List<String> imagenes = new ArrayList<>();
+    private List<MenuImagen> imagenes = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "establecimiento_id", nullable = false)
@@ -90,11 +89,11 @@ public class Menu {
         this.disponible = disponible;
     }
 
-    public List<String> getImagenes() {
+    public List<MenuImagen> getImagenes() {
         return imagenes;
     }
 
-    public void setImagenes(List<String> imagenes) {
+    public void setImagenes(List<MenuImagen> imagenes) {
         this.imagenes = imagenes;
     }
 

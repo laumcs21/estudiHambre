@@ -28,6 +28,9 @@ public class Usuario {
     @OneToMany(mappedBy = "usuario")
     private List<Comentario> comentarios = new ArrayList<>();
 
+    @OneToMany(mappedBy = "propietario", fetch = FetchType.LAZY)
+    private List<Establecimiento> establecimientos = new ArrayList<>();
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Rol rol = Rol.ESTUDIANTE;
@@ -88,4 +91,12 @@ public class Usuario {
     public Rol getRol() {return rol;}
 
     public void setRol(Rol rol) {this.rol = rol;}
+
+    public List<Establecimiento> getEstablecimientos() {
+        return establecimientos;
+    }
+
+    public void setEstablecimientos(List<Establecimiento> establecimientos) {
+        this.establecimientos = establecimientos;
+    }
 }

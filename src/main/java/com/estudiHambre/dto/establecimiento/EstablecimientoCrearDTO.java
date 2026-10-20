@@ -1,14 +1,36 @@
 package com.estudiHambre.dto.establecimiento;
 
+import jakarta.validation.constraints.*;
+
 public class EstablecimientoCrearDTO {
 
+    @NotBlank(message = "El nombre del establecimiento es obligatorio")
+    @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
     private String nombre;
+
+    @NotBlank(message = "El tipo de establecimiento es obligatorio")
+    @Size(max = 50, message = "El tipo no puede superar los 50 caracteres")
     private String tipo;
+
+    @Size(max = 500, message = "La descripción no puede superar los 500 caracteres")
     private String descripcion;
+
+    @NotBlank(message = "La dirección es obligatoria")
+    @Size(max = 200, message = "La dirección no puede superar los 200 caracteres")
     private String direccion;
+
+    @Pattern(
+            regexp = "^$|^[0-9+()\\s-]{7,20}$",
+            message = "El teléfono debe tener un formato válido"
+    )
     private String telefono;
-    private String imagenUrl;
+
+    @DecimalMin(value = "-90.0", message = "La latitud no puede ser menor que -90")
+    @DecimalMax(value = "90.0", message = "La latitud no puede ser mayor que 90")
     private Double latitud;
+
+    @DecimalMin(value = "-180.0", message = "La longitud no puede ser menor que -180")
+    @DecimalMax(value = "180.0", message = "La longitud no puede ser mayor que 180")
     private Double longitud;
 
     public EstablecimientoCrearDTO() {
@@ -52,14 +74,6 @@ public class EstablecimientoCrearDTO {
 
     public void setTelefono(String telefono) {
         this.telefono = telefono;
-    }
-
-    public String getImagenUrl() {
-        return imagenUrl;
-    }
-
-    public void setImagenUrl(String imagenUrl) {
-        this.imagenUrl = imagenUrl;
     }
 
     public Double getLatitud() {
