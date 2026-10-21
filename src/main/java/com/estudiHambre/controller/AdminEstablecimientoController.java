@@ -44,4 +44,15 @@ public class AdminEstablecimientoController {
                 establecimientoService.rechazar(id)
         );
     }
+
+
+    @GetMapping
+    public ResponseEntity<List<EstablecimientoRespuestaDTO>> consultar() {
+
+        return ResponseEntity.ok(
+                establecimientoService.listarTodosAdmin()
+        );
+    }
+
+
 }

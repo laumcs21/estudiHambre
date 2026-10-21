@@ -6,10 +6,7 @@ import com.estudiHambre.dto.establecimiento.EstablecimientoRespuestaDTO;
 import com.estudiHambre.exception.RecursoNoEncontradoException;
 import com.estudiHambre.exception.ReglaNegocioException;
 import com.estudiHambre.mapper.EstablecimientoMapper;
-import com.estudiHambre.model.Establecimiento;
-import com.estudiHambre.model.EstadoEstablecimiento;
-import com.estudiHambre.model.Usuario;
-import com.estudiHambre.model.Rol;
+import com.estudiHambre.model.*;
 import com.estudiHambre.repository.EstablecimientoRepository;
 import com.estudiHambre.repository.UsuarioRepository;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,7 +17,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.estudiHambre.event.EstablecimientoEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -31,17 +29,20 @@ public class EstablecimientoService {
     private final UsuarioRepository usuarioRepository;
     private final EstablecimientoMapper mapper;
     private final CloudinaryService cloudinaryService;
+    private final ApplicationEventPublisher eventPublisher;
+
 
     public EstablecimientoService(
             EstablecimientoRepository repository,
             UsuarioRepository usuarioRepository,
             EstablecimientoMapper mapper,
-            CloudinaryService cloudinaryService) {
+            CloudinaryService cloudinaryService, ApplicationEventPublisher eventPublisher) {
 
         this.repository = repository;
         this.usuarioRepository = usuarioRepository;
         this.mapper = mapper;
         this.cloudinaryService = cloudinaryService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -106,7 +107,11 @@ public class EstablecimientoService {
             MultipartFile imagen) {
 
         Usuario usuario = obtenerUsuarioAutenticado();
-
+        if (usuario.getRol() == Rol.ADMIN) {
+            throw new AccessDeniedException(
+                    "Los administradores no pueden registrar establecimientos"
+            );
+        }
         validarNombre(dto.getNombre());
 
         Establecimiento establecimiento = mapper.toEntity(dto);
@@ -125,6 +130,17 @@ public class EstablecimientoService {
         establecimiento.setImagenPublicId(imagenSubida.publicId());
 
         Establecimiento guardado = repository.saveAndFlush(establecimiento);
+
+
+        eventPublisher.publishEvent(
+                new EstablecimientoEvent(
+                        guardado.getId(),
+                        usuario.getId(),
+                        guardado.getNombre(),
+                        EstablecimientoEvent.TipoEvento.CREADO
+                )
+        );
+
 
         return mapper.toDTO(guardado);
     }
@@ -169,6 +185,7 @@ public class EstablecimientoService {
         return mapper.toDTO(guardado);
     }
 
+
     @Transactional
     public void eliminar(Long id) {
 
@@ -182,11 +199,22 @@ public class EstablecimientoService {
         boolean estabaAprobado =
                 establecimiento.getEstado() == EstadoEstablecimiento.APROBADO;
 
+        // Guardar el identificador de la imagen principal.
         String imagenPublicId = establecimiento.getImagenPublicId();
 
+        // Guardar los identificadores de las imágenes de todos los menús.
+        List<String> imagenesMenus = establecimiento.getMenus()
+                .stream()
+                .flatMap(menu -> menu.getImagenes().stream())
+                .map(MenuImagen::getPublicId)
+                .filter(publicId -> publicId != null && !publicId.isBlank())
+                .toList();
+
+        // Eliminar el establecimiento y sus menús de PostgreSQL.
         repository.delete(establecimiento);
         repository.flush();
 
+        // Actualizar el rol si era su último establecimiento aprobado.
         if (estabaAprobado && propietario != null
                 && propietario.getRol() == Rol.RESTAURANTE) {
 
@@ -202,8 +230,15 @@ public class EstablecimientoService {
             }
         }
 
+        // Eliminar la imagen principal después del commit.
         eliminarImagenDespuesDeCommit(imagenPublicId);
+
+        // Eliminar las imágenes de los menús después del commit.
+        for (String publicId : imagenesMenus) {
+            eliminarImagenDespuesDeCommit(publicId);
+        }
     }
+
 
     private Usuario obtenerUsuarioAutenticado() {
 
@@ -301,7 +336,19 @@ public class EstablecimientoService {
             usuarioRepository.save(propietario);
         }
 
-        return mapper.toDTO(repository.save(establecimiento));
+
+        Establecimiento guardado = repository.save(establecimiento);
+
+        eventPublisher.publishEvent(
+                new EstablecimientoEvent(
+                        guardado.getId(),
+                        propietario.getId(),
+                        guardado.getNombre(),
+                        EstablecimientoEvent.TipoEvento.APROBADO
+                )
+        );
+
+        return mapper.toDTO(guardado);
     }
 
     @Transactional
@@ -319,7 +366,19 @@ public class EstablecimientoService {
 
         establecimiento.setEstado(EstadoEstablecimiento.RECHAZADO);
 
-        return mapper.toDTO(repository.save(establecimiento));
+
+        Establecimiento guardado = repository.save(establecimiento);
+
+        eventPublisher.publishEvent(
+                new EstablecimientoEvent(
+                        guardado.getId(),
+                        guardado.getPropietario().getId(),
+                        guardado.getNombre(),
+                        EstablecimientoEvent.TipoEvento.RECHAZADO
+                )
+        );
+
+        return mapper.toDTO(guardado);
     }
 
     private void validarAdministrador() {
@@ -426,5 +485,18 @@ public class EstablecimientoService {
 
         eliminarImagenDespuesDeCommit(publicIdAnterior);
     }
+
+
+    @Transactional(readOnly = true)
+    public List<EstablecimientoRespuestaDTO> listarTodosAdmin() {
+
+        validarAdministrador();
+
+        return repository.findAll()
+                .stream()
+                .map(mapper::toDTO)
+                .toList();
+    }
+
 
 }

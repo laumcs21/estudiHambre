@@ -64,10 +64,6 @@ public class EstablecimientoMapper {
             establecimiento.setTelefono(dto.getTelefono());
         }
 
-        if (dto.getImagenUrl() != null) {
-            establecimiento.setImagenUrl(dto.getImagenUrl());
-        }
-
         if (dto.getLatitud() != null) {
             establecimiento.setLatitud(dto.getLatitud());
         }

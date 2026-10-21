@@ -19,8 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.ArrayList;
+import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 
 @Service
@@ -156,6 +155,7 @@ public class MenuService {
         List<String> publicIds = menu.getImagenes()
                 .stream()
                 .map(MenuImagen::getPublicId)
+                .filter(publicId -> publicId != null && !publicId.isBlank())
                 .toList();
 
         menuRepository.delete(menu);
@@ -229,24 +229,30 @@ public class MenuService {
                 );
     }
 
+
     private Usuario obtenerUsuarioAutenticado() {
 
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ReglaNegocioException(
-                    "Debes iniciar sesión"
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+
+            throw new AccessDeniedException(
+                    "Debes iniciar sesión para realizar esta operación"
             );
         }
 
         return usuarioRepository.findByCorreo(authentication.getName())
                 .orElseThrow(() ->
                         new RecursoNoEncontradoException(
-                                "Usuario no encontrado"
+                                "Usuario autenticado no encontrado"
                         )
                 );
     }
+
+
 
     private void validarPermisos(
             Establecimiento establecimiento,
@@ -260,11 +266,12 @@ public class MenuService {
                         .equals(usuario.getId());
 
         if (!esAdministrador && !esPropietario) {
-            throw new ReglaNegocioException(
+            throw new AccessDeniedException(
                     "No tienes permisos para gestionar este menú"
             );
         }
     }
+
 
     private void limpiarImagenSiHayRollback(String publicId) {
 

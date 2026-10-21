@@ -9,11 +9,19 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ErrorRespuesta> recursoNoEncontrado(
@@ -87,6 +95,12 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request) {
 
+        logger.error(
+                "Error inesperado en {}",
+                request.getRequestURI(),
+                ex
+        );
+
         return crearRespuesta(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Ocurrió un error interno en el servidor",
@@ -121,4 +135,55 @@ public class GlobalExceptionHandler {
                 request
         );
     }
+
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorRespuesta> jsonInvalido(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+
+        return crearRespuesta(
+                HttpStatus.BAD_REQUEST,
+                "El contenido JSON enviado no es válido",
+                request
+        );
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorRespuesta> formatoNoSoportado(
+            HttpMediaTypeNotSupportedException ex,
+            HttpServletRequest request) {
+
+        return crearRespuesta(
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                "El formato de la solicitud no es compatible",
+                request
+        );
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorRespuesta> parteFaltante(
+            MissingServletRequestPartException ex,
+            HttpServletRequest request) {
+
+        return crearRespuesta(
+                HttpStatus.BAD_REQUEST,
+                "Falta una parte obligatoria de la solicitud: "
+                        + ex.getRequestPartName(),
+                request
+        );
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorRespuesta> archivoDemasiadoGrande(
+            MaxUploadSizeExceededException ex,
+            HttpServletRequest request) {
+
+        return crearRespuesta(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "El archivo supera el tamaño máximo permitido",
+                request
+        );
+    }
+
 }

@@ -31,3 +31,16 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Variables de entorno ###
+.env
+.env.*
+!.env.example
+
+### macOS ###
+.DS_Store
+__MACOSX/
+
+### Logs ###
+*.log
+logs/

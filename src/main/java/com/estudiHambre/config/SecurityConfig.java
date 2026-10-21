@@ -2,6 +2,7 @@ package com.estudiHambre.config;
 
 import com.estudiHambre.repository.UsuarioRepository;
 import jakarta.servlet.DispatcherType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,6 +19,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 @Configuration
 public class SecurityConfig {
@@ -27,15 +32,22 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+
     @Bean
     public UserDetailsService userDetailsService(
             UsuarioRepository usuarioRepository) {
 
         return correo -> {
-            var usuario = usuarioRepository.findByCorreo(correo)
+            String correoNormalizado =
+                    correo.trim().toLowerCase(java.util.Locale.ROOT);
+
+            var usuario = usuarioRepository
+                    .findByCorreoIgnoreCase(correoNormalizado)
                     .orElseThrow(() ->
                             new org.springframework.security.core.userdetails
-                                    .UsernameNotFoundException("Usuario no encontrado"));
+                                    .UsernameNotFoundException(
+                                    "Usuario no encontrado"
+                            ));
 
             return User.withUsername(usuario.getCorreo())
                     .password(usuario.getContrasena())
@@ -43,6 +55,7 @@ public class SecurityConfig {
                     .build();
         };
     }
+
 
     @Bean
     public AuthenticationManager authenticationManager(
@@ -63,6 +76,7 @@ public class SecurityConfig {
             SecurityErrorHandler securityErrorHandler) throws Exception {
 
         http
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(
                                 CookieCsrfTokenRepository.withHttpOnlyFalse()
@@ -109,8 +123,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/menus/**")
                         .authenticated()
 
-                        .requestMatchers("/api/admin/**").authenticated()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        .requestMatchers("/api/notificaciones/**").authenticated()
                         .anyRequest().denyAll()
                 )
                 .sessionManagement(session -> session
@@ -136,9 +151,53 @@ public class SecurityConfig {
                                 )
                         )
                 )
+
+                .logout(logout -> logout
+                        .logoutUrl("/api/auth/logout")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setStatus(200);
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write(
+                                    "{\"mensaje\":\"Sesión cerrada correctamente\"}"
+                            );
+                        })
+                )
+
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable());
 
         return http.build();
     }
+
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.frontend.url}") String frontendUrl) {
+
+        CorsConfiguration config = new CorsConfiguration();
+
+        config.setAllowedOrigins(List.of(frontendUrl));
+
+        config.setAllowedMethods(List.of(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+
+        config.setAllowedHeaders(List.of(
+                "Content-Type", "X-XSRF-TOKEN"
+        ));
+
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
+    }
+
 }

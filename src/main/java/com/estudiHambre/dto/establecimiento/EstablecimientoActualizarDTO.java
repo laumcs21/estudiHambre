@@ -28,8 +28,6 @@ public class EstablecimientoActualizarDTO {
     )
     private String telefono;
 
-    private String imagenUrl;
-
     @DecimalMin(value = "-90.0", message = "La latitud no puede ser menor que -90")
     @DecimalMax(value = "90.0", message = "La latitud no puede ser mayor que 90")
     private Double latitud;
@@ -79,14 +77,6 @@ public class EstablecimientoActualizarDTO {
 
     public void setTelefono(String telefono) {
         this.telefono = telefono;
-    }
-
-    public String getImagenUrl() {
-        return imagenUrl;
-    }
-
-    public void setImagenUrl(String imagenUrl) {
-        this.imagenUrl = imagenUrl;
     }
 
     public Double getLatitud() {

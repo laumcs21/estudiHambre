@@ -1,18 +1,16 @@
 package com.estudiHambre.service;
 
-import com.estudiHambre.dto.usuario.auth.LoginDTO;
 import com.estudiHambre.dto.usuario.auth.LoginRespuestaDTO;
 import com.estudiHambre.dto.usuario.UsuarioRegistroDTO;
+import com.estudiHambre.exception.RecursoDuplicadoException;
 import com.estudiHambre.exception.ReglaNegocioException;
 import com.estudiHambre.model.Rol;
 import com.estudiHambre.model.Usuario;
 import com.estudiHambre.repository.UsuarioRepository;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Set;
 
@@ -32,17 +30,18 @@ public class AuthService {
 
     public LoginRespuestaDTO registrar(UsuarioRegistroDTO dto) {
 
-        if (usuarioRepository.existsByCorreo(dto.getCorreo())) {
-            throw new IllegalArgumentException(
+        String correo = dto.getCorreo().trim().toLowerCase(Locale.ROOT);
+
+        if (usuarioRepository.existsByCorreoIgnoreCase(correo)) {            throw new RecursoDuplicadoException(
                     "El correo ya está registrado"
             );
         }
 
         Usuario usuario = new Usuario();
 
-        usuario.setNombre(dto.getNombre());
-        usuario.setCorreo(dto.getCorreo());
-        validarContrasena(dto.getContrasena(), dto.getCorreo());
+        usuario.setNombre(dto.getNombre().trim());
+        usuario.setCorreo(correo);
+        validarContrasena(dto.getContrasena(), correo);
 
         String contrasenaCifrada =
                 passwordEncoder.encode(dto.getContrasena());
@@ -61,26 +60,12 @@ public class AuthService {
         );
     }
 
-    public LoginRespuestaDTO iniciarSesion(LoginDTO dto) {
 
-        Usuario usuario = usuarioRepository
-                .findByCorreo(dto.getCorreo())
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Correo o contraseña incorrectos"
-                        )
-                );
+    public LoginRespuestaDTO obtenerRespuestaLogin(String correo) {
 
-        boolean contrasenaCorrecta = passwordEncoder.matches(
-                dto.getContrasena(),
-                usuario.getContrasena()
-        );
-
-        if (!contrasenaCorrecta) {
-            throw new IllegalArgumentException(
-                    "Correo o contraseña incorrectos"
-            );
-        }
+        Usuario usuario = usuarioRepository.findByCorreoIgnoreCase(correo)                .orElseThrow(() -> new IllegalStateException(
+                        "No se encontró el usuario autenticado"
+                ));
 
         return new LoginRespuestaDTO(
                 usuario.getId(),
@@ -90,6 +75,7 @@ public class AuthService {
                 "Inicio de sesión exitoso"
         );
     }
+
 
     private void validarContrasena(String contrasena, String correo) {
 

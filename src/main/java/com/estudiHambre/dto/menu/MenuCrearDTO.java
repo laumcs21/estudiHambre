@@ -1,9 +1,6 @@
 package com.estudiHambre.dto.menu;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 
@@ -23,6 +20,7 @@ public class MenuCrearDTO {
     private boolean disponible = true;
 
     @NotNull(message = "Debes indicar el establecimiento")
+    @Positive(message = "El ID del establecimiento debe ser positivo")
     private Long establecimientoId;
 
     public MenuCrearDTO() {
