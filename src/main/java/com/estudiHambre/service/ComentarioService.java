@@ -1,4 +1,4 @@
 package com.estudiHambre.service;
 
-public class ComentarioService {
+public interface ComentarioService {
 }

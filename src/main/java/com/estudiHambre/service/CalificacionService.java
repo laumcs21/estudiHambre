@@ -1,38 +1,20 @@
+
 package com.estudiHambre.service;
 
 import com.estudiHambre.model.Calificacion;
-import com.estudiHambre.repository.CalificacionRepository;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
-@Service
-public class CalificacionService {
+public interface CalificacionService {
 
-    private final CalificacionRepository calificacionRepository;
+    List<Calificacion> listarTodos();
 
-    public CalificacionService(CalificacionRepository calificacionRepository) {
-        this.calificacionRepository = calificacionRepository;
-    }
+    Optional<Calificacion> buscarPorId(Long id);
 
-    public List<Calificacion> listarTodos() {
-        return calificacionRepository.findAll();
-    }
+    List<Calificacion> buscarPorEstablecimiento(Long establecimientoId);
 
-    public Optional<Calificacion> buscarPorId(Long id) {
-        return calificacionRepository.findById(id);
-    }
+    Calificacion guardar(Calificacion calificacion);
 
-    public List<Calificacion> buscarPorEstablecimiento(Long establecimientoId) {
-        return calificacionRepository.findByEstablecimientoId(establecimientoId);
-    }
-
-    public Calificacion guardar(Calificacion calificacion) {
-        return calificacionRepository.save(calificacion);
-    }
-
-    public void eliminar(Long id) {
-        calificacionRepository.deleteById(id);
-    }
+    void eliminar(Long id);
 }

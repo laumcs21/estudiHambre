@@ -1,38 +1,20 @@
+
 package com.estudiHambre.service;
 
 import com.estudiHambre.model.Usuario;
-import com.estudiHambre.repository.UsuarioRepository;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
-@Service
-public class UsuarioService {
+public interface UsuarioService {
 
-    private final UsuarioRepository usuarioRepository;
+    List<Usuario> listarTodos();
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
-        this.usuarioRepository = usuarioRepository;
-    }
+    Optional<Usuario> buscarPorId(Long id);
 
-    public List<Usuario> listarTodos() {
-        return usuarioRepository.findAll();
-    }
+    Optional<Usuario> buscarPorCorreo(String correo);
 
-    public Optional<Usuario> buscarPorId(Long id) {
-        return usuarioRepository.findById(id);
-    }
+    Usuario guardar(Usuario usuario);
 
-    public Optional<Usuario> buscarPorCorreo(String correo) {
-        return usuarioRepository.findByCorreo(correo);
-    }
-
-    public Usuario guardar(Usuario usuario) {
-        return usuarioRepository.save(usuario);
-    }
-
-    public void eliminar(Long id) {
-        usuarioRepository.deleteById(id);
-    }
+    void eliminar(Long id);
 }
