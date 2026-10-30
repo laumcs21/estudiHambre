@@ -21,8 +21,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile;
 import com.estudiHambre.service.EstablecimientoService;
 import com.estudiHambre.service.CloudinaryService;
-
+import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class EstablecimientoServiceImpl implements EstablecimientoService {
@@ -511,5 +513,227 @@ public class EstablecimientoServiceImpl implements EstablecimientoService {
                 .toList();
     }
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EstablecimientoRespuestaDTO> buscarCercanos(
+            Double latitud,
+            Double longitud,
+            Double radioKm) {
+
+        if (latitud == null || longitud == null || radioKm == null) {
+            throw new ReglaNegocioException(
+                    "La latitud, longitud y el radio son obligatorios"
+            );
+        }
+
+        if (!Double.isFinite(latitud)
+                || !Double.isFinite(longitud)
+                || latitud < -90 || latitud > 90
+                || longitud < -180 || longitud > 180) {
+            throw new ReglaNegocioException(
+                    "Las coordenadas proporcionadas no son válidas"
+            );
+        }
+
+        if (!Double.isFinite(radioKm) || radioKm <= 0) {
+            throw new ReglaNegocioException(
+                    "El radio debe ser mayor que cero"
+            );
+        }
+
+        return repository
+                .findByEstadoAndLatitudIsNotNullAndLongitudIsNotNull(
+                        EstadoEstablecimiento.APROBADO
+                )
+                .stream()
+                .filter(e -> Double.isFinite(e.getLatitud())
+                        && Double.isFinite(e.getLongitud())
+                        && e.getLatitud() >= -90
+                        && e.getLatitud() <= 90
+                        && e.getLongitud() >= -180
+                        && e.getLongitud() <= 180)
+                .filter(e -> calcularDistanciaKm(
+                        latitud, longitud,
+                        e.getLatitud(), e.getLongitud()
+                ) <= radioKm)
+                .sorted(Comparator.comparingDouble(e ->
+                        calcularDistanciaKm(
+                                latitud, longitud,
+                                e.getLatitud(), e.getLongitud()
+                        )
+                ))
+                .map(mapper::toDTO)
+                .toList();
+    }
+
+    private double calcularDistanciaKm(
+            double lat1,
+            double lon1,
+            double lat2,
+            double lon2) {
+
+        final double RADIO_TIERRA_KM = 6371.0;
+
+        double diferenciaLatitud =
+                Math.toRadians(lat2 - lat1);
+
+        double diferenciaLongitud =
+                Math.toRadians(lon2 - lon1);
+
+        double a = Math.pow(Math.sin(diferenciaLatitud / 2), 2)
+                + Math.cos(Math.toRadians(lat1))
+                * Math.cos(Math.toRadians(lat2))
+                * Math.pow(Math.sin(diferenciaLongitud / 2), 2);
+
+        double c = 2 * Math.atan2(
+                Math.sqrt(a),
+                Math.sqrt(Math.max(0, 1 - a))
+        );
+
+        return RADIO_TIERRA_KM * c;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EstablecimientoRespuestaDTO> filtrarEstablecimientos(
+            String nombre,
+            String tipo,
+            String plato,
+            BigDecimal precioMax,
+            Double latitud,
+            Double longitud,
+            Double radioKm) {
+
+        // Validar el precio máximo
+        if (precioMax != null && precioMax.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ReglaNegocioException(
+                    "El precio máximo no puede ser negativo"
+            );
+        }
+
+        // Normalizar los filtros de texto
+        String nombreNormalizado = nombre == null
+                ? ""
+                : nombre.trim().toLowerCase(Locale.ROOT);
+
+        String tipoNormalizado = tipo == null
+                ? ""
+                : tipo.trim().toLowerCase(Locale.ROOT);
+
+        String platoNormalizado = plato == null
+                ? ""
+                : plato.trim().toLowerCase(Locale.ROOT);
+
+        // Comprobar si se está utilizando el filtro de cercanía
+        boolean filtrarPorDistancia =
+                latitud != null || longitud != null || radioKm != null;
+
+        if (filtrarPorDistancia) {
+
+            if (latitud == null || longitud == null || radioKm == null) {
+                throw new ReglaNegocioException(
+                        "Para filtrar por cercanía debes proporcionar latitud, longitud y radioKm"
+                );
+            }
+
+            if (!Double.isFinite(latitud)
+                    || !Double.isFinite(longitud)
+                    || latitud < -90 || latitud > 90
+                    || longitud < -180 || longitud > 180) {
+                throw new ReglaNegocioException(
+                        "Las coordenadas proporcionadas no son válidas"
+                );
+            }
+
+            if (!Double.isFinite(radioKm) || radioKm <= 0) {
+                throw new ReglaNegocioException(
+                        "El radio debe ser mayor que cero"
+                );
+            }
+        }
+
+        // Obtener únicamente establecimientos aprobados
+        List<Establecimiento> establecimientos =
+                repository.findByEstado(EstadoEstablecimiento.APROBADO);
+
+        // Aplicar los filtros de forma combinada
+        java.util.stream.Stream<Establecimiento> resultados =
+                establecimientos.stream()
+
+                        // Filtrar por nombre del establecimiento
+                        .filter(e -> e.getNombre() != null
+                                && e.getNombre()
+                                .toLowerCase(Locale.ROOT)
+                                .contains(nombreNormalizado))
+
+                        // Filtrar por tipo de establecimiento
+                        .filter(e -> tipoNormalizado.isEmpty()
+                                || (e.getTipo() != null
+                                && e.getTipo()
+                                .toLowerCase(Locale.ROOT)
+                                .equals(tipoNormalizado)))
+
+                        // Filtrar por características de los platos
+                        .filter(e -> {
+
+                            if (platoNormalizado.isEmpty() && precioMax == null) {
+                                return true;
+                            }
+
+                            return e.getMenus().stream().anyMatch(menu -> {
+
+                                boolean coincidePlato =
+                                        platoNormalizado.isEmpty()
+                                                || (menu.getTitulo() != null
+                                                && menu.getTitulo()
+                                                .toLowerCase(Locale.ROOT)
+                                                .contains(platoNormalizado))
+                                                || (menu.getDescripcion() != null
+                                                && menu.getDescripcion()
+                                                .toLowerCase(Locale.ROOT)
+                                                .contains(platoNormalizado));
+
+                                boolean coincidePrecio =
+                                        precioMax == null
+                                                || (menu.getPrecio() != null
+                                                && menu.getPrecio().compareTo(precioMax) <= 0);
+
+                                return coincidePlato && coincidePrecio;
+                            });
+                        });
+
+        // Aplicar el filtro de cercanía cuando se solicite
+        if (filtrarPorDistancia) {
+
+            resultados = resultados
+                    .filter(e -> e.getLatitud() != null
+                            && e.getLongitud() != null
+                            && Double.isFinite(e.getLatitud())
+                            && Double.isFinite(e.getLongitud())
+                            && e.getLatitud() >= -90
+                            && e.getLatitud() <= 90
+                            && e.getLongitud() >= -180
+                            && e.getLongitud() <= 180)
+                    .filter(e -> calcularDistanciaKm(
+                            latitud,
+                            longitud,
+                            e.getLatitud(),
+                            e.getLongitud()
+                    ) <= radioKm)
+                    .sorted(Comparator.comparingDouble(
+                            e -> calcularDistanciaKm(
+                                    latitud,
+                                    longitud,
+                                    e.getLatitud(),
+                                    e.getLongitud()
+                            )
+                    ));
+        }
+
+        return resultados
+                .map(mapper::toDTO)
+                .toList();
+    }
 
 }

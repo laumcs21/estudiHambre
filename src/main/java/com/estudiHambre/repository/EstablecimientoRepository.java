@@ -29,4 +29,13 @@ public interface EstablecimientoRepository
             EstadoEstablecimiento estado
     );
 
+    List<Establecimiento> findByEstadoAndLatitudIsNotNullAndLongitudIsNotNull(
+            EstadoEstablecimiento estado
+    );
+
+    List<Establecimiento> findByNombreContainingIgnoreCaseAndTipoIgnoreCaseAndEstado(
+            String nombre,
+            String tipo,
+            EstadoEstablecimiento estado
+    );
 }

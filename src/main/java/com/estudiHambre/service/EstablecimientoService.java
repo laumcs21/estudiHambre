@@ -6,6 +6,7 @@ import com.estudiHambre.dto.establecimiento.EstablecimientoActualizarDTO;
 import com.estudiHambre.dto.establecimiento.EstablecimientoRespuestaDTO;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface EstablecimientoService {
@@ -42,4 +43,22 @@ public interface EstablecimientoService {
     void eliminarImagen(Long id);
 
     List<EstablecimientoRespuestaDTO> listarTodosAdmin();
+
+    List<EstablecimientoRespuestaDTO> buscarCercanos(
+            Double latitud,
+            Double longitud,
+            Double radioKm
+    );
+
+
+    List<EstablecimientoRespuestaDTO> filtrarEstablecimientos(
+            String nombre,
+            String tipo,
+            String plato,
+            BigDecimal precioMax,
+            Double latitud,
+            Double longitud,
+            Double radioKm
+    );
+
 }

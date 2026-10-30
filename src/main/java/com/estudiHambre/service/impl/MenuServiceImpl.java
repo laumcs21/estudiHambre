@@ -23,7 +23,10 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class MenuServiceImpl implements MenuService {
@@ -345,4 +348,171 @@ public class MenuServiceImpl implements MenuService {
 
         eliminarImagenDespuesDeCommit(imagen.getPublicId());
     }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MenuRespuestaDTO> filtrarPlatos(
+            String nombre,
+            BigDecimal precioMax,
+            String orden,
+            String nombreEstablecimiento,
+            String tipo,
+            Double latitud,
+            Double longitud,
+            Double radioKm) {
+
+        // Validar el precio máximo
+        if (precioMax != null && precioMax.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ReglaNegocioException(
+                    "El precio máximo no puede ser negativo"
+            );
+        }
+
+        // Normalizar los filtros de texto
+        String nombreNormalizado =
+                nombre == null || nombre.isBlank()
+                        ? null
+                        : nombre.trim();
+
+        String establecimientoNormalizado =
+                nombreEstablecimiento == null || nombreEstablecimiento.isBlank()
+                        ? null
+                        : nombreEstablecimiento.trim();
+
+        String tipoNormalizado =
+                tipo == null || tipo.isBlank()
+                        ? null
+                        : tipo.trim();
+
+        // Validar el orden por precio
+        String ordenNormalizado =
+                orden == null || orden.isBlank()
+                        ? "asc"
+                        : orden.trim().toLowerCase(Locale.ROOT);
+
+        if (!ordenNormalizado.equals("asc")
+                && !ordenNormalizado.equals("desc")) {
+            throw new ReglaNegocioException(
+                    "El orden debe ser asc o desc"
+            );
+        }
+
+        // Validar si se solicita el filtro de cercanía
+        boolean filtrarPorDistancia =
+                latitud != null || longitud != null || radioKm != null;
+
+        if (filtrarPorDistancia) {
+
+            if (latitud == null || longitud == null || radioKm == null) {
+                throw new ReglaNegocioException(
+                        "Para filtrar por cercanía debes proporcionar latitud, longitud y radioKm"
+                );
+            }
+
+            if (!Double.isFinite(latitud)
+                    || !Double.isFinite(longitud)
+                    || latitud < -90 || latitud > 90
+                    || longitud < -180 || longitud > 180) {
+                throw new ReglaNegocioException(
+                        "Las coordenadas proporcionadas no son válidas"
+                );
+            }
+
+            if (!Double.isFinite(radioKm) || radioKm <= 0) {
+                throw new ReglaNegocioException(
+                        "El radio debe ser mayor que cero"
+                );
+            }
+        }
+
+        // Obtener los platos que cumplen los filtros de base de datos
+        List<Menu> platos = menuRepository.filtrarPlatos(
+                EstadoEstablecimiento.APROBADO,
+                nombreNormalizado,
+                precioMax,
+                establecimientoNormalizado,
+                tipoNormalizado
+        );
+
+        // Configurar el ordenamiento por precio
+        Comparator<Menu> comparador =
+                Comparator.comparing(Menu::getPrecio);
+
+        if (ordenNormalizado.equals("desc")) {
+            comparador = comparador.reversed();
+        }
+
+        final boolean aplicarDistancia = filtrarPorDistancia;
+
+        // Combinar todos los filtros y devolver los resultados
+        return platos.stream()
+                .filter(menu -> {
+
+                    if (!aplicarDistancia) {
+                        return true;
+                    }
+
+                    Establecimiento establecimiento =
+                            menu.getEstablecimiento();
+
+                    Double latEstablecimiento =
+                            establecimiento.getLatitud();
+
+                    Double lonEstablecimiento =
+                            establecimiento.getLongitud();
+
+                    if (latEstablecimiento == null
+                            || lonEstablecimiento == null
+                            || !Double.isFinite(latEstablecimiento)
+                            || !Double.isFinite(lonEstablecimiento)
+                            || latEstablecimiento < -90
+                            || latEstablecimiento > 90
+                            || lonEstablecimiento < -180
+                            || lonEstablecimiento > 180) {
+                        return false;
+                    }
+
+                    double distancia = calcularDistanciaKm(
+                            latitud,
+                            longitud,
+                            latEstablecimiento,
+                            lonEstablecimiento
+                    );
+
+                    return distancia <= radioKm;
+                })
+                .sorted(comparador.thenComparing(Menu::getId))
+                .map(menuMapper::toDTO)
+                .toList();
+    }
+
+
+    private double calcularDistanciaKm(
+            double lat1,
+            double lon1,
+            double lat2,
+            double lon2) {
+
+        final double RADIO_TIERRA_KM = 6371.0;
+
+        double diferenciaLatitud = Math.toRadians(lat2 - lat1);
+        double diferenciaLongitud = Math.toRadians(lon2 - lon1);
+
+        double a =
+                Math.pow(Math.sin(diferenciaLatitud / 2), 2)
+                        + Math.cos(Math.toRadians(lat1))
+                        * Math.cos(Math.toRadians(lat2))
+                        * Math.pow(Math.sin(diferenciaLongitud / 2), 2);
+
+        a = Math.max(0.0, Math.min(1.0, a));
+
+        double c = 2 * Math.atan2(
+                Math.sqrt(a),
+                Math.sqrt(1 - a)
+        );
+
+        return RADIO_TIERRA_KM * c;
+    }
+
 }

@@ -11,7 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -26,27 +26,31 @@ public class EstablecimientoController {
     }
 
     // Consultar establecimientos públicos
+
+
     @GetMapping
     public ResponseEntity<List<EstablecimientoRespuestaDTO>> listar(
             @RequestParam(required = false) String nombre,
-            @RequestParam(required = false) String tipo) {
-
-        if (nombre != null && !nombre.isBlank()) {
-            return ResponseEntity.ok(
-                    establecimientoService.buscarPorNombre(nombre)
-            );
-        }
-
-        if (tipo != null && !tipo.isBlank()) {
-            return ResponseEntity.ok(
-                    establecimientoService.buscarPorTipo(tipo)
-            );
-        }
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) String plato,
+            @RequestParam(required = false) BigDecimal precioMax,
+            @RequestParam(required = false) Double latitud,
+            @RequestParam(required = false) Double longitud,
+            @RequestParam(required = false) Double radioKm) {
 
         return ResponseEntity.ok(
-                establecimientoService.listarTodos()
+                establecimientoService.filtrarEstablecimientos(
+                        nombre,
+                        tipo,
+                        plato,
+                        precioMax,
+                        latitud,
+                        longitud,
+                        radioKm
+                )
         );
     }
+
 
     // Consultar mis establecimientos
     @GetMapping("/mis-establecimientos")
@@ -109,6 +113,22 @@ public class EstablecimientoController {
         establecimientoService.eliminarImagen(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+
+    @GetMapping("/cercanos")
+    public ResponseEntity<List<EstablecimientoRespuestaDTO>> buscarCercanos(
+            @RequestParam Double latitud,
+            @RequestParam Double longitud,
+            @RequestParam Double radioKm) {
+
+        return ResponseEntity.ok(
+                establecimientoService.buscarCercanos(
+                        latitud,
+                        longitud,
+                        radioKm
+                )
+        );
     }
 
 }

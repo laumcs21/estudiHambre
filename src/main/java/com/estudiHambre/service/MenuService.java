@@ -6,6 +6,7 @@ import com.estudiHambre.dto.menu.MenuCrearDTO;
 import com.estudiHambre.dto.menu.MenuRespuestaDTO;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface MenuService {
@@ -32,4 +33,17 @@ public interface MenuService {
     void eliminar(Long id);
 
     void eliminarImagen(Long menuId, int indice);
+
+
+    List<MenuRespuestaDTO> filtrarPlatos(
+            String nombre,
+            BigDecimal precioMax,
+            String orden,
+            String nombreEstablecimiento,
+            String tipo,
+            Double latitud,
+            Double longitud,
+            Double radioKm
+    );
+
 }

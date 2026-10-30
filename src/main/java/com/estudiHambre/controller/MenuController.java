@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -90,4 +91,33 @@ public class MenuController {
 
         return ResponseEntity.noContent().build();
     }
+
+
+
+    @GetMapping("/filtrar")
+    public ResponseEntity<List<MenuRespuestaDTO>> filtrarPlatos(
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) BigDecimal precioMax,
+            @RequestParam(defaultValue = "asc") String orden,
+            @RequestParam(required = false) String nombreEstablecimiento,
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) Double latitud,
+            @RequestParam(required = false) Double longitud,
+            @RequestParam(required = false) Double radioKm) {
+
+        return ResponseEntity.ok(
+                menuService.filtrarPlatos(
+                        nombre,
+                        precioMax,
+                        orden,
+                        nombreEstablecimiento,
+                        tipo,
+                        latitud,
+                        longitud,
+                        radioKm
+                )
+        );
+    }
+
+
 }
