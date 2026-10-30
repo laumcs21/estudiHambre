@@ -1,20 +1,32 @@
 
 package com.estudiHambre.service;
 
-import com.estudiHambre.model.Calificacion;
+import com.estudiHambre.dto.calificacion.CalificacionActualizarDTO;
+import com.estudiHambre.dto.calificacion.CalificacionCrearDTO;
+import com.estudiHambre.dto.calificacion.CalificacionRespuestaDTO;
+import com.estudiHambre.dto.calificacion.CalificacionResumenDTO;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface CalificacionService {
 
-    List<Calificacion> listarTodos();
+    CalificacionRespuestaDTO crear(
+            Long establecimientoId,
+            CalificacionCrearDTO dto,
+            String correoUsuario
+    );
 
-    Optional<Calificacion> buscarPorId(Long id);
+    List<CalificacionRespuestaDTO> listarPorEstablecimiento(
+            Long establecimientoId
+    );
 
-    List<Calificacion> buscarPorEstablecimiento(Long establecimientoId);
+    CalificacionResumenDTO obtenerResumen(Long establecimientoId);
 
-    Calificacion guardar(Calificacion calificacion);
+    CalificacionRespuestaDTO actualizar(
+            Long calificacionId,
+            CalificacionActualizarDTO dto,
+            String correoUsuario
+    );
 
-    void eliminar(Long id);
+    void eliminar(Long calificacionId, String correoUsuario);
 }

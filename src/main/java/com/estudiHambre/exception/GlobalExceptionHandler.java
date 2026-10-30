@@ -16,6 +16,7 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -182,6 +183,31 @@ public class GlobalExceptionHandler {
         return crearRespuesta(
                 HttpStatus.PAYLOAD_TOO_LARGE,
                 "El archivo supera el tamaño máximo permitido",
+                request
+        );
+    }
+
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorRespuesta> manejarResponseStatusException(
+            ResponseStatusException ex,
+            HttpServletRequest request) {
+
+        HttpStatus estado = HttpStatus.resolve(
+                ex.getStatusCode().value()
+        );
+
+        if (estado == null) {
+            estado = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+
+        String mensaje = ex.getReason() != null
+                ? ex.getReason()
+                : "No fue posible completar la solicitud";
+
+        return crearRespuesta(
+                estado,
+                mensaje,
                 request
         );
     }

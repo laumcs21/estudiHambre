@@ -88,16 +88,23 @@ public class SecurityConfig {
                                 "/api/auth/registro"
                         )
                 )
+
                 .authorizeHttpRequests(auth -> auth
+
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+
+                        // Autenticación
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/registro"
                         ).permitAll()
 
-                        .requestMatchers("/api/auth/login", "/api/auth/csrf")
-                        .permitAll()
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/csrf"
+                        ).permitAll()
 
+                        // Establecimientos: consultas públicas
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/establecimientos/mis-establecimientos"
@@ -109,23 +116,47 @@ public class SecurityConfig {
                                 "/api/establecimientos/{id}"
                         ).permitAll()
 
+                        // Menús: consultas públicas
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/menus/**"
                         ).permitAll()
 
-                        .requestMatchers("/api/auth/**")
-                        .authenticated()
+                        // Calificaciones: consultas públicas
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/establecimientos/{id}/calificaciones",
+                                "/api/establecimientos/{id}/calificaciones/resumen"
+                        ).permitAll()
 
-                        .requestMatchers("/api/establecimientos/**")
-                        .authenticated()
+                        // Comentarios: consultas públicas
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/establecimientos/{id}/comentarios"
+                        ).permitAll()
 
-                        .requestMatchers("/api/menus/**")
-                        .authenticated()
-
+                        // Administración: solo ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        // Publicar comentarios y calificaciones
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/establecimientos/{id}/calificaciones",
+                                "/api/establecimientos/{id}/comentarios"
+                        ).authenticated()
+
+                        // Editar y eliminar calificaciones
+                        .requestMatchers("/api/calificaciones/**").authenticated()
+
+                        // Editar y eliminar comentarios
+                        .requestMatchers("/api/comentarios/**").authenticated()
+
+                        // Rutas protegidas existentes
+                        .requestMatchers("/api/auth/**").authenticated()
+                        .requestMatchers("/api/establecimientos/**").authenticated()
+                        .requestMatchers("/api/menus/**").authenticated()
                         .requestMatchers("/api/notificaciones/**").authenticated()
+
                         .anyRequest().denyAll()
                 )
                 .sessionManagement(session -> session

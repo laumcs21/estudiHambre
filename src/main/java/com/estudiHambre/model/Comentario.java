@@ -1,6 +1,9 @@
+
 package com.estudiHambre.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
@@ -12,11 +15,17 @@ public class Comentario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @NotBlank
+    @Size(max = 1000)
+    @Column(nullable = false, length = 1000)
     private String contenido;
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime fecha;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoComentario estado = EstadoComentario.VISIBLE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
@@ -37,6 +46,17 @@ public class Comentario {
         this.establecimiento = establecimiento;
     }
 
+    @PrePersist
+    public void asignarValoresIniciales() {
+        if (fecha == null) {
+            fecha = LocalDateTime.now();
+        }
+
+        if (estado == null) {
+            estado = EstadoComentario.VISIBLE;
+        }
+    }
+
     public Long getId() {
         return id;
     }
@@ -55,6 +75,14 @@ public class Comentario {
 
     public void setFecha(LocalDateTime fecha) {
         this.fecha = fecha;
+    }
+
+    public EstadoComentario getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoComentario estado) {
+        this.estado = estado;
     }
 
     public Usuario getUsuario() {

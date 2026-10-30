@@ -1,35 +1,16 @@
+
 package com.estudiHambre.dto.calificacion;
 
-public class CalificacionCrearDTO {
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
-    private Integer puntuacion;
-    private Long usuarioId;
-    private Long establecimientoId;
+public record CalificacionCrearDTO(
 
-    public CalificacionCrearDTO() {
-    }
+        @NotNull(message = "La puntuación es obligatoria")
+        @Min(value = 1, message = "La puntuación mínima es 1")
+        @Max(value = 5, message = "La puntuación máxima es 5")
+        Integer puntuacion
 
-    public Integer getPuntuacion() {
-        return puntuacion;
-    }
-
-    public void setPuntuacion(Integer puntuacion) {
-        this.puntuacion = puntuacion;
-    }
-
-    public Long getUsuarioId() {
-        return usuarioId;
-    }
-
-    public void setUsuarioId(Long usuarioId) {
-        this.usuarioId = usuarioId;
-    }
-
-    public Long getEstablecimientoId() {
-        return establecimientoId;
-    }
-
-    public void setEstablecimientoId(Long establecimientoId) {
-        this.establecimientoId = establecimientoId;
-    }
+) {
 }

@@ -1,6 +1,8 @@
+
 package com.estudiHambre.repository;
 
 import com.estudiHambre.model.Comentario;
+import com.estudiHambre.model.EstadoComentario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,7 +12,14 @@ import java.util.List;
 public interface ComentarioRepository
         extends JpaRepository<Comentario, Long> {
 
-    List<Comentario> findByEstablecimientoId(Long establecimientoId);
+    // Comentarios públicos de un establecimiento
+    List<Comentario> findByEstablecimientoIdAndEstadoOrderByFechaDesc(
+            Long establecimientoId,
+            EstadoComentario estado
+    );
 
-    List<Comentario> findByUsuarioId(Long usuarioId);
+    // Todos los comentarios de un establecimiento para moderación
+    List<Comentario> findByEstablecimientoIdOrderByFechaDesc(
+            Long establecimientoId
+    );
 }

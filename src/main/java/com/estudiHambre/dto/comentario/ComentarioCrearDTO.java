@@ -1,35 +1,14 @@
+
 package com.estudiHambre.dto.comentario;
 
-public class ComentarioCrearDTO {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-    private String contenido;
-    private Long usuarioId;
-    private Long establecimientoId;
+public record ComentarioCrearDTO(
 
-    public ComentarioCrearDTO() {
-    }
+        @NotBlank(message = "El comentario no puede estar vacío")
+        @Size(max = 1000, message = "El comentario no puede superar los 1000 caracteres")
+        String contenido
 
-    public String getContenido() {
-        return contenido;
-    }
-
-    public void setContenido(String contenido) {
-        this.contenido = contenido;
-    }
-
-    public Long getUsuarioId() {
-        return usuarioId;
-    }
-
-    public void setUsuarioId(Long usuarioId) {
-        this.usuarioId = usuarioId;
-    }
-
-    public Long getEstablecimientoId() {
-        return establecimientoId;
-    }
-
-    public void setEstablecimientoId(Long establecimientoId) {
-        this.establecimientoId = establecimientoId;
-    }
+) {
 }

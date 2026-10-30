@@ -1,3 +1,4 @@
+
 package com.estudiHambre.model;
 
 import jakarta.persistence.*;
