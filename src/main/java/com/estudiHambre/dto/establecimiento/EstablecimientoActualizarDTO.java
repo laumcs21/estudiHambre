@@ -5,6 +5,9 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalTime;
+
 public class EstablecimientoActualizarDTO {
 
     @Size(min = 1, max = 100, message = "El nombre debe tener entre 1 y 100 caracteres")
@@ -35,6 +38,14 @@ public class EstablecimientoActualizarDTO {
     @DecimalMin(value = "-180.0", message = "La longitud no puede ser menor que -180")
     @DecimalMax(value = "180.0", message = "La longitud no puede ser mayor que 180")
     private Double longitud;
+
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime horaApertura;
+
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime horaCierre;
+
+    private Boolean cerradoTemporalmente;
 
     public EstablecimientoActualizarDTO() {
     }
@@ -94,4 +105,28 @@ public class EstablecimientoActualizarDTO {
     public void setLongitud(Double longitud) {
         this.longitud = longitud;
     }
+    public LocalTime getHoraApertura() {
+        return horaApertura;
+    }
+
+    public void setHoraApertura(LocalTime horaApertura) {
+        this.horaApertura = horaApertura;
+    }
+
+    public LocalTime getHoraCierre() {
+        return horaCierre;
+    }
+
+    public void setHoraCierre(LocalTime horaCierre) {
+        this.horaCierre = horaCierre;
+    }
+
+    public Boolean getCerradoTemporalmente() {
+        return cerradoTemporalmente;
+    }
+
+    public void setCerradoTemporalmente(Boolean cerradoTemporalmente) {
+        this.cerradoTemporalmente = cerradoTemporalmente;
+    }
+
 }

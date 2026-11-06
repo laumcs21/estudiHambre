@@ -124,6 +124,7 @@ public class EstablecimientoServiceImpl implements EstablecimientoService {
             );
         }
         validarNombre(dto.getNombre());
+        validarHorario(dto.getHoraApertura(), dto.getHoraCierre());
 
         Establecimiento establecimiento = mapper.toEntity(dto);
 
@@ -170,6 +171,14 @@ public class EstablecimientoServiceImpl implements EstablecimientoService {
         if (dto.getNombre() != null) {
             validarNombre(dto.getNombre());
         }
+
+        java.time.LocalTime aperturaFinal = dto.getHoraApertura() != null
+                ? dto.getHoraApertura()
+                : establecimiento.getHoraApertura();
+        java.time.LocalTime cierreFinal = dto.getHoraCierre() != null
+                ? dto.getHoraCierre()
+                : establecimiento.getHoraCierre();
+        validarHorario(aperturaFinal, cierreFinal);
 
         mapper.actualizarEntidad(dto, establecimiento);
 
@@ -734,6 +743,17 @@ public class EstablecimientoServiceImpl implements EstablecimientoService {
         return resultados
                 .map(mapper::toDTO)
                 .toList();
+    }
+
+    private void validarHorario(
+            java.time.LocalTime horaApertura,
+            java.time.LocalTime horaCierre
+    ) {
+        if ((horaApertura == null) != (horaCierre == null)) {
+            throw new ReglaNegocioException(
+                    "Debes indicar horaApertura y horaCierre juntas"
+            );
+        }
     }
 
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "establecimientos")
@@ -34,6 +35,15 @@ public class Establecimiento {
 
     private Double longitud;
 
+    @Column(name = "hora_apertura")
+    private LocalTime horaApertura;
+
+    @Column(name = "hora_cierre")
+    private LocalTime horaCierre;
+
+    @Column(name = "cerrado_temporalmente")
+    private Boolean cerradoTemporalmente = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "propietario_id")
     private Usuario propietario;
@@ -50,6 +60,13 @@ public class Establecimiento {
 
     @OneToMany(mappedBy = "establecimiento")
     private List<Comentario> comentarios = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "establecimiento",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<BeneficioEstudiantil> beneficiosEstudiantiles = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -144,6 +161,30 @@ public class Establecimiento {
 
     public void setLongitud(Double longitud) {
         this.longitud = longitud;
+    }
+
+    public LocalTime getHoraApertura() {
+        return horaApertura;
+    }
+
+    public void setHoraApertura(LocalTime horaApertura) {
+        this.horaApertura = horaApertura;
+    }
+
+    public LocalTime getHoraCierre() {
+        return horaCierre;
+    }
+
+    public void setHoraCierre(LocalTime horaCierre) {
+        this.horaCierre = horaCierre;
+    }
+
+    public Boolean getCerradoTemporalmente() {
+        return cerradoTemporalmente;
+    }
+
+    public void setCerradoTemporalmente(Boolean cerradoTemporalmente) {
+        this.cerradoTemporalmente = cerradoTemporalmente;
     }
 
     public List<Menu> getMenus() {

@@ -113,7 +113,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/establecimientos",
-                                "/api/establecimientos/{id}"
+                                "/api/establecimientos/{id}",
+                                "/api/establecimientos/{id}/beneficios-estudiantiles"
                         ).permitAll()
 
                         // Menús: consultas públicas
@@ -150,6 +151,9 @@ public class SecurityConfig {
 
                         // Editar y eliminar comentarios
                         .requestMatchers("/api/comentarios/**").authenticated()
+
+                        // Builder de descuentos y tiqueteras
+                        .requestMatchers("/api/beneficios-estudiantiles/**").authenticated()
 
                         // Rutas protegidas existentes
                         .requestMatchers("/api/auth/**").authenticated()

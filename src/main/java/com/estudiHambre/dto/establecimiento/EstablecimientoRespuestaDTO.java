@@ -1,6 +1,9 @@
 package com.estudiHambre.dto.establecimiento;
 
 import com.estudiHambre.model.EstadoEstablecimiento;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import java.time.LocalTime;
 
 public class EstablecimientoRespuestaDTO {
 
@@ -13,6 +16,15 @@ public class EstablecimientoRespuestaDTO {
     private String imagenUrl;
     private Double latitud;
     private Double longitud;
+
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime horaApertura;
+
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime horaCierre;
+
+    private Boolean cerradoTemporalmente;
+    private Boolean abiertoAhora;
     private EstadoEstablecimiento estado;
 
     public EstablecimientoRespuestaDTO() {
@@ -88,6 +100,38 @@ public class EstablecimientoRespuestaDTO {
 
     public void setLongitud(Double longitud) {
         this.longitud = longitud;
+    }
+
+    public LocalTime getHoraApertura() {
+        return horaApertura;
+    }
+
+    public void setHoraApertura(LocalTime horaApertura) {
+        this.horaApertura = horaApertura;
+    }
+
+    public LocalTime getHoraCierre() {
+        return horaCierre;
+    }
+
+    public void setHoraCierre(LocalTime horaCierre) {
+        this.horaCierre = horaCierre;
+    }
+
+    public Boolean getCerradoTemporalmente() {
+        return cerradoTemporalmente;
+    }
+
+    public void setCerradoTemporalmente(Boolean cerradoTemporalmente) {
+        this.cerradoTemporalmente = cerradoTemporalmente;
+    }
+
+    public Boolean getAbiertoAhora() {
+        return abiertoAhora;
+    }
+
+    public void setAbiertoAhora(Boolean abiertoAhora) {
+        this.abiertoAhora = abiertoAhora;
     }
 
     public EstadoEstablecimiento getEstado() {
